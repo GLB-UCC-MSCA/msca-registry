@@ -1,18 +1,12 @@
 # =============================================================================
-# Stage 1: Build the distribution registry binary
+# Stage 1: Download the distribution binary
 # =============================================================================
-ARG DISTRIBUTION_VERSION=v3.1.1
-FROM golang:alpine AS registry-builder
-
-RUN apk add --no-cache git
+ARG DISTRIBUTION_VERSION=3.1.1
+FROM opensuse/tumbleweed AS distribution
 
 ARG DISTRIBUTION_VERSION
-WORKDIR /src
-RUN git clone --branch "${DISTRIBUTION_VERSION}" --depth 1 https://github.com/distribution/distribution.git .
-
-RUN CGO_ENABLED=0 go build -trimpath \
-    -ldflags "-s -w" \
-    -o /usr/bin/registry ./cmd/registry
+RUN mkdir /tmp/distribution && \
+    curl -L https://github.com/distribution/distribution/releases/download/v${DISTRIBUTION_VERSION}/registry_${DISTRIBUTION_VERSION}_linux_amd64.tar.gz | tar --directory /tmp/distribution -zxvf -
 
 # =============================================================================
 # Stage 2: Final image — openSUSE Tumbleweed with supervisord
@@ -36,7 +30,7 @@ RUN zypper --non-interactive refresh && \
     && zypper clean --all
 
 # ── Copy registry binary & config ───────────────────────────────────────────
-COPY --from=registry-builder /usr/bin/registry /usr/bin/registry
+COPY --from=distribution /tmp/registry /usr/bin/registry
 COPY registry-config.yml /etc/distribution/config.yml
 RUN mkdir -p /var/lib/registry
 
