@@ -30,7 +30,7 @@ RUN zypper --non-interactive refresh && \
     && zypper clean --all
 
 # ── Copy registry binary & config ───────────────────────────────────────────
-COPY --from=distribution /tmp/registry /usr/bin/registry
+COPY --from=distribution /tmp/distribution/registry /usr/bin/registry
 COPY registry-config.yml /etc/distribution/config.yml
 RUN mkdir -p /var/lib/registry
 
